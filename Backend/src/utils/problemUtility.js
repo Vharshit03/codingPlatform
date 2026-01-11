@@ -1,4 +1,4 @@
-import axios from 'axios';
+const axios = require('axios')
 
 
 
@@ -10,7 +10,15 @@ const getProblemId = (language)=>{
     'javascript':63
     }
 
-    return problemId[language.ToLowerCase()];
+    return problemId[language.toLowerCase()];
+}
+
+
+const waiting = async (timer)=>{
+
+    setTimeout(() => {
+        return 1
+    },timer);
 }
 
 
@@ -20,25 +28,69 @@ async function batchSubmit(submissions) {
     method: 'POST',
     url: 'https://judge0-ce.p.rapidapi.com/submissions/batch',
     params: {
-        base64_encoded: 'true'
+        base64_encoded: 'false'
     },
     headers: {
-        'x-rapidapi-key': 'd437216425msh7b96918801c54b0p1b3f58jsn25fae81a474b',
+        'x-rapidapi-key': process.env.JUDGE0_KEY,
         'x-rapidapi-host': 'judge0-ce.p.rapidapi.com',
         'Content-Type': 'application/json'
     },
     data: {
         submissions
     }
-    };
+};
 
+    async function fetchData(){
     try{
-    const response = await axios.request(options);
-    console.log(response.data);
+        const response = await axios.request(options);
+        return response.data;
     }catch (error){
-    console.error(error);
+        console.error(error);
     }
+}
+
+    return await fetchData();
     
 }
 
-module.exports = {getProblemId,batchSubmit}
+const tokenSubmit = async (resultToken)=>{
+
+    const options = {
+    method: 'GET',
+    url: 'https://judge0-ce.p.rapidapi.com/submissions/batch',
+    params: {
+        tokens: resultToken,
+        base64_encoded: 'false',
+        fields: '*'
+    },
+    headers: {
+        'x-rapidapi-key': process.env.JUDGE0_KEY,
+        'x-rapidapi-host': 'judge0-ce.p.rapidapi.com'
+    }
+    };
+
+    async function fetchData(){
+    try {
+        const response = await axios.request(options);
+        return response.data
+    } catch (error) {
+        console.error(error);
+    }
+    }
+
+
+    while(true){
+
+    const result = await fetchData();
+    const isresultObtained = result.submissions.every(res => res.status_id>2 )
+
+    if(isresultObtained)
+    return result.submissions;
+
+    await waiting(1000)
+    }
+
+
+}
+
+module.exports = {getProblemId,batchSubmit,tokenSubmit}

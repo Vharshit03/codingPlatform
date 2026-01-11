@@ -1,6 +1,7 @@
 const express = require("express")
-const {register,login,logout,adminRegister} = require("../controllers/Authentication")
+const {register,login,logout,adminRegister} = require("../controllers/Auth")
 const auth = require("../middleware/authUser")
+const admin = require("../middleware/adminMiddleware")
 
 const authRouter = express.Router()
 
@@ -8,7 +9,7 @@ const authRouter = express.Router()
 authRouter.post("/register",register)
 authRouter.post("/login",login)
 authRouter.post("/logout",auth,logout)
-authRouter.post("/admin/register",auth,adminRegister)
+authRouter.post("/admin/register",admin,adminRegister)
 authRouter.get("/check",auth,(req,res)=>{
 
     const data = req.results

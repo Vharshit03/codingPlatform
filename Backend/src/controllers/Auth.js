@@ -12,7 +12,7 @@ const register = async (req,res)=>{
         
         Validate(req.body)
         const {emailId,password} = req.body
-        req.body.role = user;
+        req.body.role ='user'
 
         req.body.password = await bcrypt.hash(password,10)
 
@@ -97,8 +97,6 @@ const adminRegister = async (req,res)=>{
 
     try{
 
-        if(req.results.role!='admin')
-        throw new Error("Invalid Credentials")
 
         Validate(req.body)
         const {firstName,emailId,password} = req.body
