@@ -8,7 +8,7 @@ const authMiddleware = async (req,res,next)=>{
     try{
         const {token} = req.cookies
         if(!token)
-        throw new Error("Token does'nt exist,Please Login Again")
+        res.status(401).send("Token does'nt exist,Please Login Again")
 
         const payload = jwt.verify(token,process.env.JWT_SECRETKEY)
 
@@ -18,7 +18,7 @@ const authMiddleware = async (req,res,next)=>{
 
         const user = await User.findById(_id)
         if(!user)
-         throw new Error("User does'nt exist")
+        res.status(404).send("User does'nt exist")
 
         const IsBlocked = await redisClient.exists(`token:${token}`)
         if(IsBlocked)

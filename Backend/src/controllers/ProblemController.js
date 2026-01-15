@@ -1,5 +1,6 @@
 const {getProblemId,batchSubmit,tokenSubmit} = require("../utils/problemUtility")
 const Problem = require('../model/problem')
+const Submission = require('../model/submission')
 
 const problemCheck = async({referenceSolution,visibleTestcase})=>{
 
@@ -100,23 +101,24 @@ const updateProblem = async (req,res)=>{
 
     try {
 
+    if(!id)
+    res.status(400).send('ID is missing')
+
     const problem = await Problem.findById(id);
 
     if(!problem)
-    throw new Error("problem does'nt exist")
+    res.status(404).send("Problem does'nt exist")
 
     const check = await problemCheck(req.body);
 
-    if(problem.problemCreator!=req.results.id)
-    throw new Error("Invalid Access")
 
-    problem.updateOne(req.body);
+    const newProblem = await Problem.findByIdAndUpdate(id,{...req.body},{runValidators:true,new:true})
 
-    res.status(200).send("Problem Updated Succesfully")
+    res.status(200).send("Updated Success, new Problem:"+newProblem)
 
     } 
     catch (err) {
-        res.status(400).send("Error:"+err)
+        res.status(500).send("Error:"+err)
     }
     
 
@@ -130,22 +132,19 @@ const removeProblem = async (req,res)=>{
     try {
 
         if(!id)
-        throw new Error("ID does'nt exist")
+        res.status(400).send("ID is missing")
 
         const problem = await Problem.findById(id)
 
         if(!problem)
-        throw new Error("Problem does'nt exist")
-
-        if(problem.problemCreator!=req.results._id)
-        throw new Error("Invalid Access: Unauthorized Access not granted")
+        res.status(404).send("Problem does'nt exist")
 
         await problem.deleteOne();
 
-        res.status(201).send("Problem deleted succesfully")
+        res.status(200).send("Problem deleted succesfully")
         
     } catch (error) {
-        res.status(400).send("Error:"+err)
+        res.status(500).send("Error:"+err)
     }
 
 }
@@ -159,7 +158,7 @@ const fetchProblem = async(req,res)=>{
         const problem = await Problem.findById(id)
         
         if(!problem)
-        throw new Error("Problem does'nt Exist")
+        res.status(404).send("Problem does'nt Exist")
 
         res.status(200).json({
             message:"Success",
@@ -167,7 +166,7 @@ const fetchProblem = async(req,res)=>{
         })
     }
     catch(err){
-        res.status(400).send("Error:"+err)
+        res.status(500).send("Error:"+err)
     }
 }
 
@@ -177,15 +176,38 @@ const fetchAllProblem = async()=>{
 
         const problems = await Problem.find({})
 
+        if(problems.length==0)
+        res.status(404).send("Problem not found")
+
         res.status(200).json({
             message:"success",
             ...problems
         })
     }
     catch(err){
-        res.status(400).send("Error"+err)
+        res.status(500).send("Error"+err)
+    }
+}
+
+const solvedProblem = async(req,res)=>{
+
+    try{
+        const id = req.results._id;
+
+        const solvedProblems = (await Submission.find({userID:id})).sort({createdAt:-1});
+
+        if(solvedProblem.length==0)
+        res.status(400).send("There is no User Solution Exist")
+
+        res.status(200).json({
+            message:"Success",
+            solutions:solvedProblems
+        })
+    }
+    catch(err){
+        res.status(500).send("Error:"+err)
     }
 }
 
 
-module.exports = {createProblem,updateProblem,removeProblem,fetchProblem,fetchAllProblem}
+module.exports = {createProblem,updateProblem,removeProblem,fetchProblem,fetchAllProblem,solvedProblem}

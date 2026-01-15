@@ -1,16 +1,17 @@
 const express = require("express")
-const admin = require("../middleware/adminMiddleware")
-const {createProblem,updateProblem,removeProblem,fetchProblem,fetchAllProblem} = require("../controllers/ProblemController")
+const adminMiddleware = require("../middleware/adminMiddlewareMiddleware")
+const userMiddleware = require("../middleware/authUser")
+const {createProblem,updateProblem,removeProblem,fetchProblem,fetchAllProblem,solvedProblem} = require("../controllers/ProblemController")
 
 const ProblemRouter = express.Router();
 
-//admin accessa apis
-ProblemRouter.post('/create',admin,createProblem)
-ProblemRouter.patch('/update/:id',admin,updateProblem)
-ProblemRouter.delete('/delete:id',admin,removeProblem)
+//adminMiddleware accessa apis
+ProblemRouter.post('/create',adminMiddleware,createProblem)
+ProblemRouter.patch('/update/:id',adminMiddleware,updateProblem)
+ProblemRouter.delete('/delete/:id',adminMiddleware,removeProblem)
 
-ProblemRouter.get('/:id',fetchProblem)
-ProblemRouter.get('/getAllProblem',fetchAllProblem)
+ProblemRouter.get('/:id',userMiddleware,fetchProblem)
+ProblemRouter.get('/getAllProblem',userMiddleware,fetchAllProblem)
 // ProblemRouter.get('/SolvedProblemByuser',solvedProblem)
 
 
