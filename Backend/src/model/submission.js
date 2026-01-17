@@ -28,17 +28,19 @@ const submissionSchema = new Schema({
     },
     runTime:{
         type:Number,
-        required:true
+        default:0
     },
     memory:{
-        type:String,
-        required:true
+        type:Number,
+        default:0
     },
     TestCasesPassed:{
-        type:Number
+        type:Number,
+        default:0
     },
     TotalTestCases:{
-        type:Number
+        type:Number,
+        default:0
     },
     Error_msg:{
         type:String

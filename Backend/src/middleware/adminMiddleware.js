@@ -21,7 +21,7 @@ const adminMiddleware = async (req,res,next)=>{
         throw new Error("User does'nt exist")
 
         if(user.role!='admin')
-        res.status(403).send("Invalid Access")
+        return res.status(403).send("Invalid Access")
 
 
         const IsBlocked = await redisClient.exists(`token:${token}`)

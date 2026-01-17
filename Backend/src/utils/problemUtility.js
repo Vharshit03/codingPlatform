@@ -21,7 +21,6 @@ const waiting = async (timer)=>{
     },timer);
 }
 
-
 async function batchSubmit(submissions) {
 
     const options = {
@@ -92,5 +91,7 @@ const tokenSubmit = async (resultToken)=>{
 
 
 }
+
+
 
 module.exports = {getProblemId,batchSubmit,tokenSubmit}

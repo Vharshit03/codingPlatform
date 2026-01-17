@@ -1,10 +1,11 @@
 const express = require('express')
+require('dotenv').config()
 const cookieParser = require('cookie-parser')
 const main = require('./config/db.js')
 const redisClient = require('./config/redis.js')
 const AuthRouter = require('./routes/userAuth.js')
 const ProblemRouter = require("./routes/problem.js")
-require('dotenv').config()
+
 
 
 const app = express()

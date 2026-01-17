@@ -2,7 +2,7 @@ const {getProblemId,batchSubmit,tokenSubmit} = require("../utils/problemUtility"
 const Problem = require('../model/problem')
 const Submission = require('../model/submission')
 
-const problemCheck = async({referenceSolution,visibleTestcase})=>{
+const problemCheck = async ({referenceSolution,visibleTestcase})=>{
 
     try {
 
@@ -26,9 +26,10 @@ const problemCheck = async({referenceSolution,visibleTestcase})=>{
 
             const Batchresult = await batchSubmit(submissions)
 
-            const resultToken = Batchresult.map((res)=> res.token ).join(',')
+            const resultToken = await Batchresult.map((res)=> res.token).join(',')
 
             const testResult = await tokenSubmit(resultToken);
+            
 
             for(const test of testResult){
                 if(test.status_id!=3){
@@ -36,10 +37,12 @@ const problemCheck = async({referenceSolution,visibleTestcase})=>{
                 }
             }
 
+            return testResult
+
         }
         
     } catch (error) {
-        return ("Error:"+error)
+        throw new Error("Error:"+error)
     }
 }
 
@@ -49,37 +52,9 @@ const createProblem = async (req,res)=>{
 
     try{
 
-        for(const {language,completeCode} of referenceSolution ){
+        const check = await problemCheck({referenceSolution,visibleTestcase});
 
-            const languageId = getProblemId(language)
-
-            //source_code
-            //language_id
-            //stdin
-            //expected_output
-
-            const submissions = visibleTestcase.map((submit) =>(
-                {
-                    "source_code":completeCode,
-                    "language_id":languageId,
-                    "stdin":submit.input,
-                    "expected_output":submit.output
-                }
-            ))
-
-            const Batchresult = await batchSubmit(submissions)
-
-            const resultToken = Batchresult.map((res)=> res.token ).join(',')
-
-            const testResult = await tokenSubmit(resultToken);
-
-            for(const test of testResult){
-                if(test.status_id!=3){
-                return res.status(400).send("Error Occured: "+ test.stderr)
-                }
-            }
-
-        }
+        console.log(check)
 
         const userProblem = await Problem.create({
             ...req.body,
@@ -102,12 +77,12 @@ const updateProblem = async (req,res)=>{
     try {
 
     if(!id)
-    res.status(400).send('ID is missing')
+    return res.status(400).send('ID is missing')
 
     const problem = await Problem.findById(id);
 
     if(!problem)
-    res.status(404).send("Problem does'nt exist")
+    return res.status(404).send("Problem does'nt exist")
 
     const check = await problemCheck(req.body);
 
@@ -141,7 +116,7 @@ const removeProblem = async (req,res)=>{
 
         await problem.deleteOne();
 
-        res.status(200).send("Problem deleted succesfully")
+        res.status(200).send("Problem succesfully deleted ")
         
     } catch (error) {
         res.status(500).send("Error:"+err)
@@ -151,18 +126,18 @@ const removeProblem = async (req,res)=>{
 
 const fetchProblem = async(req,res)=>{
 
-    const id = req.params
+    const {id} = req.params
 
     try{
         
-        const problem = await Problem.findById(id)
+        const problem = await Problem.findById(id).select('_id title description difficulty tags visibleTestcase startCode')
         
         if(!problem)
-        res.status(404).send("Problem does'nt Exist")
+        return res.status(404).send("Problem does'nt Exist")
 
         res.status(200).json({
             message:"Success",
-            ...problem,
+            ...problem._doc,
         })
     }
     catch(err){
@@ -170,18 +145,18 @@ const fetchProblem = async(req,res)=>{
     }
 }
 
-const fetchAllProblem = async()=>{
+const fetchAllProblem = async(req,res)=>{
 
     try{
 
-        const problems = await Problem.find({})
+        const problems = await Problem.find({}).select('_id title difficulty tags')
 
         if(problems.length==0)
-        res.status(404).send("Problem not found")
+        return res.status(404).send("Problem not found")
 
         res.status(200).json({
             message:"success",
-            ...problems
+            Problems:problems
         })
     }
     catch(err){
