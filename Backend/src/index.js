@@ -5,6 +5,7 @@ const main = require('./config/db.js')
 const redisClient = require('./config/redis.js')
 const AuthRouter = require('./routes/userAuth.js')
 const ProblemRouter = require("./routes/problem.js")
+const submitRouter = require("./routes/submission.js")
 
 
 
@@ -16,6 +17,7 @@ app.use(cookieParser());
 
 app.use("/user",AuthRouter)
 app.use("/problem",ProblemRouter)
+app.use("/submission",submitRouter)
 
 const InitializeConnection = async function (){
  

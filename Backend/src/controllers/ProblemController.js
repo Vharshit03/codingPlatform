@@ -169,14 +169,25 @@ const solvedProblem = async(req,res)=>{
     try{
         const id = req.results._id;
 
-        const solvedProblems = (await Submission.find({userID:id})).sort({createdAt:-1});
+        const solvedProblems = await Submission.find({userID:id}).sort({createdAt:-1});
 
         if(solvedProblem.length==0)
         res.status(400).send("There is no User Solution Exist")
 
+        const seen = new Set()
+
+        const Submissions = solvedProblems.filter(sub=>{
+            if(seen.has(sub.problemID.toString())){
+                return false
+            }
+            seen.add(sub.problemID.toString())
+            return true
+        })
+
+
         res.status(200).json({
             message:"Success",
-            solutions:solvedProblems
+            Submissions,
         })
     }
     catch(err){

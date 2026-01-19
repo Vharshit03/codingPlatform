@@ -19,7 +19,7 @@ const submissionSchema = new Schema({
     },
     status:{
         type:String,
-        enum:["Pending","Accepted","Compilation Error","TLE"],
+        enum:["Pending","Accepted","Wrong","Compilation Error","TLE"],
         required:true
     },
     SubmittedCode:{

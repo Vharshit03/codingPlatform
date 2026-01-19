@@ -1,10 +1,11 @@
 const Problem = require('../model/problem')
 const { getProblemId } = require('../utils/problemUtility')
 const Submission = require('../model/submission')
+const {getProblemId,batchSubmit,tokenSubmit} = require('../utils/problemUtility')
 
 const submitCode = async (req,res) => {
 
-    const {id,language,code} = req.body
+    const {id,language,solutionCode} = req.body
 
     try{
 
@@ -19,12 +20,12 @@ const submitCode = async (req,res) => {
            problemID:id,
            language,
            status:"pending",
-           SubmittedCode:code
+           SubmittedCode:solutionCode
         })
 
         const submissions = hiddenTestcase.map((submit) =>(
                 {
-                    "source_code":code,
+                    "source_code":solutionCode,
                     "language_id":languageId,
                     "stdin":submit.input,
                     "expected_output":submit.output
@@ -33,21 +34,30 @@ const submitCode = async (req,res) => {
 
         const Batchresult = await batchSubmit(submissions)
 
-        const resultToken = Batchresult.map((res)=> res.token.join(','))
+        const resultToken = Batchresult.map((res)=> res.token).join(',')
 
         const Result = await tokenSubmit(resultToken);
 
         const runTime = 0;
         const memory = 0
         const passedTestCases = 0
-        const stdErr = "NuLL";
+        const stdErr = "NA";
+        const status = "Accepted"
+
+        const expectedOutput = hiddenTestcase.map((test) =>test.output )
+        const output = Result.map((res)=> res.stdout);
 
         for(const test of Result){
             if(test.status_id!=3){
             stdErr = test.stderr
-            return res.status(400).send("Error Occured: "+ test.stderr)
-
-            }
+            status = test.status.description
+            return res.status(400).json({
+                msg:stdErr,
+                output,
+                expectedOutput,
+                passedTestCases,
+                TotalTestCases:Result.length
+            }) }
 
             passedTestCases++
             runTime += Number(test.time)
@@ -57,7 +67,7 @@ const submitCode = async (req,res) => {
 
 
         await submission.updateOne({
-            status: "Accepted",
+            status,
             runTime,
             memory,
             TestCasesPassed:passedTestCases,
@@ -65,13 +75,79 @@ const submitCode = async (req,res) => {
             Error_msg:stdErr
         })
 
-        res.status(201).send("Code Submitted Successfully")
+        res.status(201).json({
+            msg:"Code Submitted Successfully",
+            output,
+            expectedOutput,
+            passedTestCases,
+            TotalTestCases:Result.length,
+            runTime,
+            memory,
+            status
+        })
+
+
 
     }
     catch(err){
         res.status(500).send("Error:"+err)
     }
 }
+
+const runCode = async (req,res) => {
+
+    const {language,solutionCode,visibleTestcase} = req.body
+
+    try{
+
+        const languageId = getProblemId(language)
+
+        const submissions = visibleTestcase.map((submit) =>(
+            {
+                "source_code":solutionCode,
+                "language_id":languageId,
+                "stdin":submit.input,
+                "expected_output":submit.output
+            }
+        ))
+
+        const Batchresult = await batchSubmit(submissions)
+
+        const resultToken = Batchresult.map((res)=> res.token).join(',')
+
+        const Result = await tokenSubmit(resultToken);
+
+
+        for(const test of Result){
+            if(test.status_id!=3){
+            return res.status(400).json({
+              msg:test.status.description,
+              error:test.stderr
+            })
+            }
+
+        }
+
+        const RunResult = Result.map((test)=>{
+            return {
+                input: test.stdin,
+                output:test.stdout,
+                expected_output:test.expected_output,
+                status:test.status.description
+            }
+        })
+
+        res.status(200).send(RunResult)
+
+
+    }
+    catch(err){
+        res.status(500).send("Error:"+err)
+    }
+
+}
+
+module.exports = {submitCode,runCode}
 
 // {
 //     source_code: "const input = require('fs').readFileSync(0,'utf-8').trim()\n" +
