@@ -1,26 +1,29 @@
 const Problem = require('../model/problem')
-const { getProblemId } = require('../utils/problemUtility')
-const Submission = require('../model/submission')
 const {getProblemId,batchSubmit,tokenSubmit} = require('../utils/problemUtility')
+
+const Submission = require('../model/submission')
 
 const submitCode = async (req,res) => {
 
-    const {id,language,solutionCode} = req.body
+    const {language,solutionCode} = req.body
+    const {problemId} = req.params
+
 
     try{
 
-        const problem = await Problem.findById(id).select('hiddenTestcase')
+        const problem = await Problem.findById(problemId)
+        const hiddenTestcase = problem._doc.hiddenTestcase
 
-        const hiddenTestcase = problem._doc
-        const _id = req.result._id
+        const _id = req.results._id
         const languageId = getProblemId(language)
 
         const submission = await Submission.create({
            userID:_id,
-           problemID:id,
+           problemID:problemId,
            language,
-           status:"pending",
-           SubmittedCode:solutionCode
+           status:"Pending",
+           SubmittedCode:solutionCode,
+           TotalTestCases:hiddenTestcase.length
         })
 
         const submissions = hiddenTestcase.map((submit) =>(
@@ -38,11 +41,11 @@ const submitCode = async (req,res) => {
 
         const Result = await tokenSubmit(resultToken);
 
-        const runTime = 0;
-        const memory = 0
-        const passedTestCases = 0
-        const stdErr = "NA";
-        const status = "Accepted"
+        let runTime = 0;
+        let memory = 0
+        let passedTestCases = 0
+        let stdErr = "NA";
+        let status = "Accepted"
 
         const expectedOutput = hiddenTestcase.map((test) =>test.output )
         const output = Result.map((res)=> res.stdout);
@@ -60,10 +63,17 @@ const submitCode = async (req,res) => {
             }) }
 
             passedTestCases++
-            runTime += Number(test.time)
-            memory = max(memory,test.memory)
+            runTime += parseFloat(test.time)
+            memory = Math.max(memory,test.memory)
         }
 
+        // submission.status = status
+        // submission.runTime = runTime
+        // submission.memory = memory
+        // submission.TestCasesPassed = passedTestCases
+        // submission.Error_msg = stdErr
+
+        // await submission.save();
 
 
         await submission.updateOne({
@@ -74,6 +84,12 @@ const submitCode = async (req,res) => {
             TotalTestCases:Result.length,
             Error_msg:stdErr
         })
+
+
+        if(!req.results.problemSolved.includes(problemId)){
+          req.results.problemSolved.push(problemId)
+          await req.results.save()
+        }
 
         res.status(201).json({
             msg:"Code Submitted Successfully",
@@ -96,13 +112,16 @@ const submitCode = async (req,res) => {
 
 const runCode = async (req,res) => {
 
-    const {language,solutionCode,visibleTestcase} = req.body
+    const {language,solutionCode} = req.body
+    const {id} = req.params
 
     try{
+        
+        const problem = await Problem.findById(id)
 
         const languageId = getProblemId(language)
 
-        const submissions = visibleTestcase.map((submit) =>(
+        const submissions = problem._doc.visibleTestcase.map((submit) =>(
             {
                 "source_code":solutionCode,
                 "language_id":languageId,
@@ -118,20 +137,10 @@ const runCode = async (req,res) => {
         const Result = await tokenSubmit(resultToken);
 
 
-        for(const test of Result){
-            if(test.status_id!=3){
-            return res.status(400).json({
-              msg:test.status.description,
-              error:test.stderr
-            })
-            }
-
-        }
-
         const RunResult = Result.map((test)=>{
             return {
                 input: test.stdin,
-                output:test.stdout,
+                output:test.stdout.replace("\n",""),
                 expected_output:test.expected_output,
                 status:test.status.description
             }

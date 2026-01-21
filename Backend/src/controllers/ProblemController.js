@@ -1,4 +1,5 @@
 const {getProblemId,batchSubmit,tokenSubmit} = require("../utils/problemUtility")
+const User = require('../model/user')
 const Problem = require('../model/problem')
 const Submission = require('../model/submission')
 
@@ -164,30 +165,35 @@ const fetchAllProblem = async(req,res)=>{
     }
 }
 
-const solvedProblem = async(req,res)=>{
+const solvedProblemsbyUser = async(req,res)=>{
 
     try{
-        const id = req.results._id;
 
-        const solvedProblems = await Submission.find({userID:id}).sort({createdAt:-1});
+        const user = await User.findById(req.results._id).populate("problemSolved")
 
-        if(solvedProblem.length==0)
-        res.status(400).send("There is no User Solution Exist")
 
-        const seen = new Set()
+        // const id = req.results._id;
 
-        const Submissions = solvedProblems.filter(sub=>{
-            if(seen.has(sub.problemID.toString())){
-                return false
-            }
-            seen.add(sub.problemID.toString())
-            return true
-        })
+        // const solvedProblems = await Submission.find({userID:id}).sort({createdAt:-1});
+
+        // if(solvedProblem.length==0)
+        // res.status(400).send("There is no User Solution Exist")
+
+        // const seen = new Set()
+
+        // const Submissions = solvedProblems.filter(sub=>{
+        //     if(seen.has(sub.problemID.toString())){
+        //         return false
+        //     }
+        //     seen.add(sub.problemID.toString())
+        //     return true
+        // })
 
 
         res.status(200).json({
             message:"Success",
-            Submissions,
+            total: user.problemSolved.length,
+            problems:user.problemSolved,
         })
     }
     catch(err){
@@ -196,4 +202,4 @@ const solvedProblem = async(req,res)=>{
 }
 
 
-module.exports = {createProblem,updateProblem,removeProblem,fetchProblem,fetchAllProblem,solvedProblem}
+module.exports = {createProblem,updateProblem,removeProblem,fetchProblem,fetchAllProblem,solvedProblemsbyUser}

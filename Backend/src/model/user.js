@@ -26,6 +26,13 @@ const UserSchema = new Schema({
     password:{
         type:String,
         required:true
+    },
+    problemSolved:{
+        type:[{
+            type:mongoose.Schema.ObjectId,
+            ref:'problem',
+        }],
+        unique:true
     }
 },{
     timestamps:true

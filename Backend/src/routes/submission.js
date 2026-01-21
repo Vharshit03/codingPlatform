@@ -4,8 +4,8 @@ const {submitCode,runCode} = require('../controllers/userSubmission')
 const submitRouter = express.Router()
 
 
-submitRouter.post('/submit',AuthMiddleware,submitCode)
-submitRouter.post('/run',AuthMiddleware,runCode)
+submitRouter.post('/submit/:problemId',AuthMiddleware,submitCode)
+submitRouter.post('/run/:id',AuthMiddleware,runCode)
 
 
 module.exports = submitRouter
