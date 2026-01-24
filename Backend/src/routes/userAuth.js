@@ -1,5 +1,5 @@
 const express = require("express")
-const {register,login,logout,adminRegister} = require("../controllers/Auth")
+const {register,login,logout,adminRegister,deleteProfile} = require("../controllers/Auth")
 const auth = require("../middleware/authUser")
 const admin = require("../middleware/adminMiddleware")
 
@@ -10,6 +10,7 @@ authRouter.post("/register",register)
 authRouter.post("/login",login)
 authRouter.post("/logout",auth,logout)
 authRouter.post("/admin/register",admin,adminRegister)
+authRouter.delete("/delete",auth,deleteProfile)
 authRouter.get("/check",auth,(req,res)=>{
 
     const data = req.results

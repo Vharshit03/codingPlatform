@@ -156,7 +156,25 @@ const runCode = async (req,res) => {
 
 }
 
-module.exports = {submitCode,runCode}
+const submittedProblems = async()=>{
+
+    try{
+        const userID = req.results._id
+        const problemID = req.params.pId
+        const submitproblems = await Submission.find({userID,problemID})
+
+        if(!submitproblems){
+        return res.status(404).send("NO submitted problemsfound")
+        }
+
+        res.status(200).send(submitproblems)
+    }
+    catch(err){
+        res.status(500).send("Error:"+err)
+    }
+}
+
+module.exports = {submitCode,runCode,submittedProblems}
 
 // {
 //     source_code: "const input = require('fs').readFileSync(0,'utf-8').trim()\n" +

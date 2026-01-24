@@ -122,5 +122,18 @@ const adminRegister = async (req,res)=>{
     }
 }
 
+const deleteProfile = async()=>{
 
-module.exports = {register,login,logout,adminRegister}
+    try{
+        const userId = req.results._id;
+
+        await User.findByIdAndDelete(userId)
+
+        res.status(200).send("Profile deleted successfully")
+    }
+    catch(err){
+        res.status(500).send("Error:"+err)
+    }
+}
+
+module.exports = {register,login,logout,adminRegister,deleteProfile}
