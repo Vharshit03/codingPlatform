@@ -172,7 +172,7 @@ const solvedProblemsbyUser = async(req,res)=>{
         const user = await User.findById(req.results._id).populate("problemSolved")
 
 
-        // const id = req.results._id;
+        //
 
         // const solvedProblems = await Submission.find({userID:id}).sort({createdAt:-1});
 

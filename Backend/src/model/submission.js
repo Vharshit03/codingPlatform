@@ -49,5 +49,7 @@ const submissionSchema = new Schema({
     timestamps:true
 })
 
+submissionSchema.index({userId,problemID})
+
 const Submission = mongoose.model("submission",submissionSchema)
 module.exports = Submission
